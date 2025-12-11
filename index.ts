@@ -18,6 +18,17 @@ switch (cmd) {
         // no command provided
         // assume 'nag' command
         console.log("nag")
+        const { values } = parseArgs({
+            allowPositionals: true,
+            options: {
+                workflow: {
+                    type: 'string',
+                    short: 'w',
+                    default: 'default'
+                }
+            }
+        })
+        console.log(values)
         break
 
 }
