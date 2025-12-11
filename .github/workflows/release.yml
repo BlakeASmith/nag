@@ -28,10 +28,44 @@ jobs:
       - name: Build all platforms
         run: bun build.ts
       
+      - name: Extract version from tag
+        id: tag_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Extract changelog entry
+        id: changelog
+        run: |
+          VERSION="${{ steps.tag_version.outputs.version }}"
+          # Extract the changelog section for this version
+          awk -v version="$VERSION" '
+            BEGIN { found=0 }
+            /^## \[' version '\]/ {
+              found=1
+              print
+              next
+            }
+            /^## \[/ && found {
+              exit
+            }
+            found {
+              print
+            }
+          ' CHANGELOG.md > release_notes.txt
+          
+          # If no changelog entry found, create a default message
+          if [ ! -s release_notes.txt ]; then
+            echo "## [$VERSION]" > release_notes.txt
+            echo "" >> release_notes.txt
+            echo "See [CHANGELOG.md](CHANGELOG.md) for details." >> release_notes.txt
+          fi
+      
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: dist/nag-*
+          body_path: release_notes.txt
           draft: false
           prerelease: ${{ contains(github.ref, '-') }}
         env:
