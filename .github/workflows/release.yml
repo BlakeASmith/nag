@@ -41,12 +41,12 @@ jobs:
           # Extract the changelog section for this version
           awk -v version="$VERSION" '
             BEGIN { found=0 }
-            /^## \[' version '\]/ {
+            $0 ~ "^## \\[" version "\\]" {
               found=1
               print
               next
             }
-            /^## \[/ && found {
+            $0 ~ "^## \\[" && found {
               exit
             }
             found {
