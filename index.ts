@@ -1,19 +1,24 @@
 
 import { parseArgs } from "util";
 
-const { values, positionals } = parseArgs({
+const { positionals } = parseArgs({
   args: Bun.argv,
-  options: {
-    flag1: {
-      type: "boolean",
-    },
-    flag2: {
-      type: "string",
-    },
-  },
-  strict: true,
-  allowPositionals: true,
+  positionals: ["command"],
+  strict: false,
 });
 
-console.log(values);
-console.log(positionals);
+const [_, __, cmd] = positionals
+
+
+switch (cmd) {
+    // only one command for now
+    case "nag":
+    case undefined:
+    default:
+        // no command provided
+        // assume 'nag' command
+        console.log("nag")
+        break
+
+}
+
