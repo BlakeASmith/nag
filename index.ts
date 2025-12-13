@@ -1,6 +1,10 @@
 
 import { parseArgs } from "util";
 import db from "./db"
+import { new_ } from "./cmd/new"
+import { list_ } from "./cmd/list"
+import { delete_ } from "./cmd/delete"
+import { nag_ } from "./cmd/nag"
 
 const { positionals } = parseArgs({
   args: Bun.argv,
@@ -14,58 +18,15 @@ const [_, __, cmd] = positionals
 function runCmd(cmd: string | undefined) {
     switch (cmd) {
         case "new":
-            // create a new nag
-            const { values: newValues, positionals: [title] } = parseArgs({
-                allowPositionals: true,
-                positionals: ["cmd", "title"],
-                options: {
-                    workflow: {
-                        type: 'string',
-                        short: 'w',
-                        default: 'default',
-                    },
-                    every: {
-                        type: 'string',
-                        short: 'i',
-                        default: '1',
-                    },
-                }
-            })
-            
-            const tokens = newValues.every.split(' ')
-            let unit = undefined
-            let every = undefined
-            if (tokens.length === 1) {
-                unit = tokens[0]
-                every = 1
-            } else {
-                unit = tokens[1]
-                every = parseInt(tokens[0] as string)
-            }
+            new_()
+            break
 
-            if (!unit?.endsWith('s')) {
-                unit = `${unit}s`
-            }
+        case "list":
+            list_()
+            break
 
-            const repeat = {
-                every,
-                unit
-            }
-
-            if (!title) {
-                console.error("Title is required")
-                return
-            }
-            
-            db.nag.create({
-                title,
-                repeat,
-                // TODO: actual date conversion logig
-                nagDueTimestamp: Date.now() + repeat.every * 60 * 60,
-                onNagWorkflow: {
-                    type: newValues.workflow,
-                },
-            })
+        case "delete":
+            delete_()
             break
 
         case "nag":
@@ -73,18 +34,7 @@ function runCmd(cmd: string | undefined) {
         default:
             // no command provided
             // assume 'nag' command
-            console.log("nag")
-            const { values: nagValues } = parseArgs({
-                allowPositionals: true,
-                options: {
-                    workflow: {
-                        type: 'string',
-                        short: 'w',
-                        default: 'default'
-                    }
-                }
-            })
-            console.log(nagValues)
+            nag_()
             break
     }
 }

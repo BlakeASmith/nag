@@ -17,7 +17,7 @@ type WorkflowInstance = {
 
 // support repeating by x number of units
 // as well as repeat rules like "every week on Monday and Thursday"
-type RepeatRule = {
+export type RepeatRule = {
     every: number,
     unit: 'hours' | 'days' | 'weeks' | 'months' | 'years' | 'days',
 } | {
@@ -75,10 +75,36 @@ const nagDao = {
         `).get(id)
         return result as GetNag
     },
+    list: () => {
+        const results = db.query(`
+            SELECT * FROM nag WHERE isDeleted = 0 ORDER BY nagDueTimestamp ASC
+        `).all()
+        return results.map(row => ({
+            ...row,
+            repeat: row.repeat ? JSON.parse(row.repeat as string) : undefined,
+            onNagWorkflow: row.onNagWorkflow ? JSON.parse(row.onNagWorkflow as string) : undefined,
+        })) as GetNag[]
+    },
+    listPastDue: () => {
+        const now = Date.now()
+        const results = db.query(`
+            SELECT * FROM nag WHERE isDeleted = 0 AND nagDueTimestamp < ?
+        `, now).all()
+        return results.map(row => ({
+            ...row,
+            repeat: row.repeat ? JSON.parse(row.repeat as string) : undefined,
+            onNagWorkflow: row.onNagWorkflow ? JSON.parse(row.onNagWorkflow as string) : undefined,
+        })) as GetNag[]
+    },
     update: (nag: UpdateNag) => {
         db.run(`
             UPDATE nag SET title = ?, nagDueTimestamp = ?, repeat = ?, onNagWorkflow = ? WHERE id = ?
         `, [nag.title, nag.nagDueTimestamp, JSON.stringify(nag.repeat), JSON.stringify(nag.onNagWorkflow), nag.id])
+    },
+    delete: (id: number) => {
+        db.run(`
+            UPDATE nag SET isDeleted = 1 WHERE id = ?
+        `, [id])
     },
 }
 
